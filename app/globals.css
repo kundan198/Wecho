@@ -1,26 +1,282 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #03030d;
+  --foreground: #f4f3ff;
+  --muted: #908da7;
+  --surface: #070716;
+  --surface-2: #101027;
+  --line: rgba(163, 161, 205, 0.13);
+  --brand-blue: #3777ff;
+  --brand-violet: #6b66ff;
+  --brand-purple: #8b5cf6;
+  --brand-magenta: #ce4fff;
+  --brand-mint: #56d7ff;
+  --brand-teal: #6370ff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --color-muted: var(--muted);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-brand-blue: var(--brand-blue);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-purple: var(--brand-purple);
+  --color-brand-magenta: var(--brand-magenta);
+  --color-brand-mint: var(--brand-mint);
+  --color-brand-teal: var(--brand-teal);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--background);
+  scroll-padding-top: 5rem;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 75% 45% at 80% 35%, rgba(37, 18, 92, 0.46), transparent 65%),
+    radial-gradient(ellipse 60% 40% at 0% 50%, rgba(22, 51, 120, 0.18), transparent 65%),
+    radial-gradient(ellipse 80% 50% at 50% 110%, rgba(68, 19, 90, 0.16), transparent 62%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  overflow-x: clip;
+}
+
+::selection {
+  background: var(--brand-blue);
+  color: white;
+}
+
+.font-display {
+  font-family: var(--font-poppins), var(--font-jakarta), sans-serif;
+}
+
+.font-script {
+  font-family: var(--font-caveat), cursive;
+}
+
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--brand-blue),
+    var(--brand-violet) 58%,
+    var(--brand-magenta)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.bg-gradient-brand {
+  background: linear-gradient(
+    100deg,
+    var(--brand-blue),
+    var(--brand-violet) 58%,
+    var(--brand-magenta)
+  );
+}
+
+.glass {
+  background: rgba(238, 244, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(238, 244, 255, 0.11);
+}
+
+/* Darker glass for content that sits over the bright WebGL world */
+.panel {
+  background: rgba(6, 6, 20, 0.44);
+  backdrop-filter: blur(16px) saturate(1.15);
+  border: 1px solid rgba(238, 244, 255, 0.1);
+  border-radius: 20px;
+}
+
+/* Legibility + neon lift for headlines floating on the 3D stage */
+.glow-text {
+  text-shadow: 0 2px 34px rgba(4, 4, 14, 0.9), 0 0 60px rgba(107, 102, 255, 0.22);
+}
+
+/* Soft radial scrim to keep body copy readable over the scene */
+.scrim {
+  position: relative;
+}
+.scrim::before {
+  content: "";
+  position: absolute;
+  inset: -12% -8%;
+  z-index: -1;
+  background: radial-gradient(ellipse 60% 55% at 50% 50%, rgba(4, 4, 14, 0.72), transparent 72%);
+  pointer-events: none;
+}
+
+.card {
+  background: linear-gradient(160deg, rgba(238, 244, 255, 0.07), rgba(238, 244, 255, 0.025) 60%);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(238, 244, 255, 0.11);
+  border-radius: 16px;
+  transition: border-color 300ms ease, background 300ms ease;
+}
+
+.card:hover {
+  border-color: rgba(55, 119, 255, 0.45);
+}
+
+/* Gradient border card */
+.card-glow {
+  position: relative;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(160deg, #12234a, #0c1830 60%) padding-box,
+    linear-gradient(140deg, var(--brand-blue), var(--brand-violet), var(--brand-magenta))
+      border-box;
+}
+
+.glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(130px);
+  pointer-events: none;
+}
+
+/* Glass reflection sweep on hover */
+.sheen {
+  position: relative;
+  overflow: hidden;
+}
+
+.sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  transition: transform 900ms ease;
+  pointer-events: none;
+}
+
+.sheen:hover::after {
+  transform: translateX(120%);
+}
+
+/* Soft film grain for texture */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Hide the scrollbar on the work page's focus dock while keeping it scrollable. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* CRT scanline overlay for the live-preview windows on the work page. */
+.scanlines {
+  position: relative;
+}
+.scanlines::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.05) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Scroll-stack depth: WorkStack writes each pinned card's coverage into
+   --recede (0 = front, 1 = fully covered); the covered card scales + dims back
+   into the deck. Only on md+, where the cards actually pin and stack. */
+@media (min-width: 768px) {
+  .stack-card {
+    transform-origin: top center;
+    transform: scale(calc(1 - 0.07 * var(--recede, 0)));
+    opacity: calc(1 - 0.4 * var(--recede, 0));
+    filter: brightness(calc(1 - 0.32 * var(--recede, 0)));
+    will-change: transform, opacity, filter;
+  }
+}
+
+/* Work-stack cards use the site's frosted glass — same cool translucent tint
+   and faint white border as .glass / .panel, but dark enough (0.72) to cover
+   cleanly as the cards stack, so the layer beneath frosts through the blur. */
+.glass-card {
+  background: rgba(9, 10, 26, 0.72);
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  border: 1px solid rgba(238, 244, 255, 0.12);
+  border-radius: 18px;
+}
+
+/* Pulsing glow for the comet head on the services flight path. */
+@keyframes core-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 24px rgba(107, 102, 255, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 52px rgba(206, 79, 255, 0.5);
+  }
+}
+
+.core-pulse {
+  animation: core-pulse 4s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+@supports (animation-timeline: view()) {
+  .scroll-sheen {
+    animation: marquee linear both;
+    animation-timeline: view();
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+  .sheen::after {
+    display: none;
+  }
+  .core-pulse {
+    animation: none;
+  }
+  .stack-card {
+    transform: none;
+    opacity: 1;
+    filter: none;
+  }
 }
