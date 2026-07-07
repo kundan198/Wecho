@@ -200,7 +200,7 @@ function LiveWindow({ project }: { project: Project }) {
 }
 
 /* Browser-chrome shell around the live window, with a hover "Visit" overlay. */
-function BrowserFrame({ project }: { project: Project }) {
+function BrowserFrame({ project, active = true }: { project: Project; active?: boolean }) {
   return (
     <div className="glass-card group/frame relative overflow-hidden">
       {/* browser chrome */}
@@ -228,16 +228,18 @@ function BrowserFrame({ project }: { project: Project }) {
       {/* live window + visit overlay */}
       <div className="relative">
         <LiveWindow project={project} />
-        <a
-          href={project.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute inset-0 z-10 grid place-items-center bg-background/0 transition-colors duration-300 hover:bg-background/35"
-        >
-          <span className="flex translate-y-1 items-center gap-2 rounded-full border border-white/25 bg-background/75 px-5 py-2 text-sm font-semibold opacity-0 backdrop-blur transition-all duration-300 group-hover/frame:translate-y-0 group-hover/frame:opacity-100">
-            Visit live site <ArrowUpRight />
-          </span>
-        </a>
+        {active && (
+          <a
+            href={project.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="absolute inset-0 z-10 hidden place-items-center bg-background/0 transition-colors duration-300 hover:bg-background/35 sm:grid"
+          >
+            <span className="flex translate-y-1 items-center gap-2 rounded-full border border-white/25 bg-background/75 px-5 py-2 text-sm font-semibold opacity-0 backdrop-blur transition-all duration-300 group-hover/frame:translate-y-0 group-hover/frame:opacity-100">
+              Visit live site <ArrowUpRight />
+            </span>
+          </a>
+        )}
       </div>
     </div>
   );
@@ -409,7 +411,7 @@ function SelectedWork() {
   const drag = useRef<{ x: number } | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const [dragging, setDragging] = useState(false);
-  const [dim, setDim] = useState({ card: 620, side: 360, height: 522 });
+  const [dim, setDim] = useState({ card: 620, side: 360, height: 522, compact: false });
   const count = PROJECTS.length;
   const active = PROJECTS[activeIndex];
   const previous = PROJECTS[(activeIndex - 1 + count) % count];
@@ -420,11 +422,13 @@ function SelectedWork() {
     if (!el) return;
     const measure = () => {
       const viewport = Math.max(320, el.clientWidth);
-      const card = Math.max(280, Math.min(viewport * 0.72, 680));
+      const compact = viewport < 640;
+      const card = compact ? Math.max(286, Math.min(viewport, 390)) : Math.max(420, Math.min(viewport * 0.72, 680));
       setDim({
         card,
-        side: Math.min(card * 0.74, viewport * 0.35),
+        side: compact ? card * 0.2 : Math.min(card * 0.74, viewport * 0.35),
         height: Math.round(card * FRAME_RATIO) + 112,
+        compact,
       });
     };
     measure();
@@ -467,8 +471,8 @@ function SelectedWork() {
       <Reveal>
         <div
           ref={stageRef}
-          className="relative mx-auto overflow-hidden py-8"
-          style={{ height: dim.height + 112, cursor: dragging ? "grabbing" : "grab" }}
+          className="-mx-3 touch-pan-y relative overflow-hidden py-8 sm:mx-auto"
+          style={{ height: dim.height + (dim.compact ? 42 : 112), cursor: dragging ? "grabbing" : "grab" }}
           onPointerDown={onPointerDown}
           onPointerUp={onPointerUp}
           onPointerLeave={onPointerUp}
@@ -491,6 +495,7 @@ function SelectedWork() {
             const offset = relativeOffset(index);
             const visible = Math.abs(offset) <= 1;
             const isActive = offset === 0;
+            if (!visible) return null;
             return (
               <div
                 key={project.title}
@@ -511,15 +516,17 @@ function SelectedWork() {
                 }`}
                 style={{
                   width: dim.card,
-                  transform: `translateX(calc(-50% + ${offset * dim.side}px)) translateY(${isActive ? 0 : 24}px) scale(${
-                    isActive ? 1 : 0.75
-                  }) rotateY(${isActive ? 0 : offset < 0 ? 18 : -18}deg)`,
-                  opacity: visible ? (isActive ? 1 : 0.34) : 0,
-                  filter: isActive ? "blur(0px) saturate(1)" : "blur(1px) saturate(0.72)",
+                  transform: `translateX(calc(-50% + ${offset * dim.side}px)) translateY(${
+                    isActive ? 0 : dim.compact ? 18 : 24
+                  }px) scale(${isActive ? 1 : dim.compact ? 0.68 : 0.75}) rotateY(${
+                    isActive ? 0 : offset < 0 ? 14 : -14
+                  }deg)`,
+                  opacity: visible ? (isActive ? 1 : dim.compact ? 0.42 : 0.34) : 0,
+                  filter: isActive ? "blur(0px) saturate(1)" : "blur(0.6px) saturate(0.72)",
                 }}
               >
                 <div className={isActive ? "" : "pointer-events-none"}>
-                  <BrowserFrame project={project} />
+                  <BrowserFrame project={project} active={isActive} />
                 </div>
                 {!isActive && (
                   <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-background/30" aria-hidden="true" />
@@ -561,7 +568,7 @@ function SelectedWork() {
           </button>
         </div>
 
-        <div className="mt-4 flex items-center justify-center gap-4">
+        <div className="mt-3 flex items-center justify-center gap-4 sm:mt-4">
           <button
             type="button"
             onClick={() => go(-1)}
@@ -595,6 +602,17 @@ function SelectedWork() {
         <p className="mt-4 text-center font-mono text-xs uppercase tracking-[0.3em] text-muted">
           Swipe the rail · {String(activeIndex + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
         </p>
+        <div className="mt-5 flex justify-center sm:hidden">
+          <a
+            href={active.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-foreground"
+            style={{ backgroundColor: `${active.accent}18` }}
+          >
+            Visit live site <ArrowUpRight />
+          </a>
+        </div>
       </Reveal>
 
       <Reveal y={18}>
