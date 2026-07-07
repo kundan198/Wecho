@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { GradientButton, Reveal, SectionTag, TiltCard } from "@/components/ui";
+import { GradientButton, Reveal, SectionTag } from "@/components/ui";
 
 const PROJECTS = [
   {
@@ -243,115 +243,88 @@ function BrowserFrame({ project }: { project: Project }) {
   );
 }
 
-/* One project, presented as a full editorial case study. Alternating sides on
-   large screens, each carrying its own accent glow and index number. */
-function CaseStudy({ project, index, reversed }: { project: Project; index: number; reversed: boolean }) {
-  const num = String(index + 1).padStart(2, "0");
-
+function RailArrow({ direction }: { direction: "left" | "right" }) {
   return (
-    <article id={`case-${index}`} className="relative scroll-mt-28">
-      <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
-        {/* preview */}
-        <div className={`relative lg:col-span-7 ${reversed ? "lg:order-2" : ""}`}>
-          <div
-            className="pointer-events-none absolute -inset-6 -z-10 rounded-[40px] opacity-70 blur-3xl"
-            style={{ background: `radial-gradient(60% 60% at 50% 45%, ${project.accent}33, transparent 70%)` }}
-            aria-hidden="true"
-          />
-          <Reveal y={30}>
-            <TiltCard>
-              <BrowserFrame project={project} />
-            </TiltCard>
-          </Reveal>
-        </div>
+    <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden="true">
+      <path
+        d={direction === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"}
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-        {/* dossier */}
-        <div className={`relative lg:col-span-5 ${reversed ? "lg:order-1" : ""}`}>
-          {/* giant ghost index */}
-          <span
-            className="font-display pointer-events-none absolute -top-16 right-0 select-none text-[9rem] font-extrabold leading-none opacity-[0.06] lg:-top-20 lg:text-[12rem]"
-            style={{ color: project.accent }}
-            aria-hidden="true"
+function ProjectDossier({ project, index }: { project: Project; index: number }) {
+  return (
+    <div className="mx-auto mt-12 max-w-4xl text-center">
+      <div className="flex items-center justify-center gap-3 font-mono text-[11px] uppercase tracking-[0.32em]">
+        <span style={{ color: project.accent }}>{String(index + 1).padStart(2, "0")}</span>
+        <span className="h-px w-8 bg-line" />
+        <span className="text-muted">{project.kind}</span>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+        <h3 className="font-display text-3xl font-bold tracking-tight md:text-5xl">{project.title}</h3>
+        {project.collab && (
+          <a
+            href={project.collab.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-full border border-brand-magenta/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-magenta transition-colors hover:border-brand-magenta hover:text-foreground"
           >
-            {num}
+            With {project.collab.name}
+          </a>
+        )}
+      </div>
+
+      <p className="mx-auto mt-4 max-w-2xl leading-relaxed text-foreground/75">{project.brief}</p>
+
+      <div className="mt-5 flex flex-wrap justify-center gap-2">
+        {project.services.map((service) => (
+          <span key={service} className="rounded-full border border-line bg-background/35 px-3 py-1 text-xs font-semibold text-muted">
+            {service}
           </span>
+        ))}
+      </div>
 
-          <Reveal y={24} delay={0.05}>
-            <div className="relative">
-              <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.32em]">
-                <span style={{ color: project.accent }}>{num}</span>
-                <span className="h-px w-8 bg-line" />
-                <span className="text-muted">{project.kind}</span>
-              </div>
+      <div className="mx-auto mt-7 grid max-w-2xl gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3">
+        {project.metrics.map(([value, label]) => (
+          <div key={label} className="bg-background/55 p-4">
+            <p className="font-display text-lg font-bold md:text-xl" style={{ color: project.accent }}>
+              {value}
+            </p>
+            <p className="mt-1 text-[11px] leading-snug text-muted">{label}</p>
+          </div>
+        ))}
+      </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <h3 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{project.title}</h3>
-                {project.collab && (
-                  <a
-                    href={project.collab.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="rounded-full border border-brand-magenta/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-magenta transition-colors hover:border-brand-magenta hover:text-foreground"
-                  >
-                    With {project.collab.name}
-                  </a>
-                )}
-              </div>
-
-              <p className="mt-4 max-w-xl leading-relaxed text-foreground/75">{project.brief}</p>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                {project.services.map((service) => (
-                  <span
-                    key={service}
-                    className="rounded-full border border-line bg-background/35 px-3 py-1 text-xs font-semibold text-muted"
-                  >
-                    {service}
-                  </span>
-                ))}
-              </div>
-
-              {/* metrics */}
-              <div className="mt-7 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line">
-                {project.metrics.map(([value, label]) => (
-                  <div key={label} className="bg-background/55 p-3.5">
-                    <p className="font-display text-lg font-bold" style={{ color: project.accent }}>
-                      {value}
-                    </p>
-                    <p className="mt-1 text-[11px] leading-snug text-muted">{label}</p>
-                  </div>
-                ))}
-              </div>
-
-              {/* build / echo */}
-              <div className="mt-7 grid max-w-xl gap-5 sm:grid-cols-2">
-                <div>
-                  <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The build</h4>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.build}</p>
-                </div>
-                <div>
-                  <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The echo</h4>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.echo}</p>
-                </div>
-              </div>
-
-              <a
-                href={project.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group/cta mt-8 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-white/25"
-                style={{ backgroundColor: `${project.accent}14` }}
-              >
-                Visit live site
-                <span className="transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5">
-                  <ArrowUpRight />
-                </span>
-              </a>
-            </div>
-          </Reveal>
+      <div className="mx-auto mt-7 grid max-w-3xl gap-5 text-left sm:grid-cols-2">
+        <div>
+          <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The build</h4>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.build}</p>
+        </div>
+        <div>
+          <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The echo</h4>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.echo}</p>
         </div>
       </div>
-    </article>
+
+      <a
+        href={project.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="group/cta mt-8 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-white/25"
+        style={{ backgroundColor: `${project.accent}14` }}
+      >
+        Visit live site
+        <span className="transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5">
+          <ArrowUpRight />
+        </span>
+      </a>
+    </div>
   );
 }
 
@@ -432,13 +405,201 @@ function WorkHero() {
 }
 
 function SelectedWork() {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number } | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [dim, setDim] = useState({ card: 620, side: 360, height: 522 });
+  const count = PROJECTS.length;
+  const active = PROJECTS[activeIndex];
+  const previous = PROJECTS[(activeIndex - 1 + count) % count];
+  const next = PROJECTS[(activeIndex + 1) % count];
+
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const measure = () => {
+      const viewport = Math.max(320, el.clientWidth);
+      const card = Math.max(280, Math.min(viewport * 0.72, 680));
+      setDim({
+        card,
+        side: Math.min(card * 0.74, viewport * 0.35),
+        height: Math.round(card * FRAME_RATIO) + 112,
+      });
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
+  const go = (direction: -1 | 1) => {
+    setActiveIndex((current) => (current + direction + count) % count);
+  };
+
+  const onPointerDown = (event: React.PointerEvent) => {
+    if ((event.target as HTMLElement).closest("a,button")) return;
+    drag.current = { x: event.clientX };
+    setDragging(true);
+    try {
+      (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+    } catch {}
+  };
+
+  const onPointerUp = (event: React.PointerEvent) => {
+    if (!drag.current) return;
+    const travel = event.clientX - drag.current.x;
+    drag.current = null;
+    setDragging(false);
+    if (Math.abs(travel) < 42) return;
+    go(travel > 0 ? -1 : 1);
+  };
+
+  const relativeOffset = (index: number) => {
+    let offset = index - activeIndex;
+    if (offset > count / 2) offset -= count;
+    if (offset < -count / 2) offset += count;
+    return offset;
+  };
+
   return (
     <section className="relative z-10 mx-auto max-w-7xl px-6 pb-28">
-      <div className="space-y-28 md:space-y-36">
-        {PROJECTS.map((project, i) => (
-          <CaseStudy key={project.title} project={project} index={i} reversed={i % 2 === 1} />
-        ))}
-      </div>
+      <Reveal>
+        <div
+          ref={stageRef}
+          className="relative mx-auto overflow-hidden py-8"
+          style={{ height: dim.height + 112, cursor: dragging ? "grabbing" : "grab" }}
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+          onPointerLeave={onPointerUp}
+        >
+          <div
+            className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[min(62rem,84vw)] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border border-brand-mint/10 bg-brand-mint/[0.035]"
+            aria-hidden="true"
+          />
+          <div
+            className="pointer-events-none absolute left-1/2 top-10 h-[80%] w-[52%] -translate-x-1/2 rounded-[48px] opacity-60 blur-3xl"
+            style={{ background: `radial-gradient(60% 60% at 50% 42%, ${active.accent}38, transparent 72%)` }}
+            aria-hidden="true"
+          />
+
+          {PROJECTS.map((project, index) => {
+            const offset = relativeOffset(index);
+            const visible = Math.abs(offset) <= 1;
+            const isActive = offset === 0;
+            return (
+              <div
+                key={project.title}
+                onClick={() => {
+                  if (!isActive && visible) setActiveIndex(index);
+                }}
+                onKeyDown={(event) => {
+                  if (!isActive && visible && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    setActiveIndex(index);
+                  }
+                }}
+                role={!isActive && visible ? "button" : undefined}
+                tabIndex={!isActive && visible ? 0 : -1}
+                aria-label={`Show ${project.title}`}
+                className={`absolute left-1/2 top-8 block origin-center text-left transition-all duration-500 ease-out ${
+                  isActive ? "z-20" : visible ? "z-10 cursor-pointer" : "pointer-events-none z-0"
+                }`}
+                style={{
+                  width: dim.card,
+                  transform: `translateX(calc(-50% + ${offset * dim.side}px)) translateY(${isActive ? 0 : 24}px) scale(${
+                    isActive ? 1 : 0.75
+                  }) rotateY(${isActive ? 0 : offset < 0 ? 18 : -18}deg)`,
+                  opacity: visible ? (isActive ? 1 : 0.34) : 0,
+                  filter: isActive ? "blur(0px) saturate(1)" : "blur(1px) saturate(0.72)",
+                }}
+              >
+                <div className={isActive ? "" : "pointer-events-none"}>
+                  <BrowserFrame project={project} />
+                </div>
+                {!isActive && (
+                  <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-background/30" aria-hidden="true" />
+                )}
+              </div>
+            );
+          })}
+
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => go(-1)}
+            aria-label="Previous project"
+            className="group absolute left-2 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-3 rounded-full border border-line bg-background/65 py-2 pl-2 pr-4 text-left text-muted backdrop-blur-md transition-all hover:border-brand-mint/50 hover:bg-surface/85 hover:text-foreground md:flex"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-brand-mint transition-transform group-hover:-translate-x-0.5">
+              <RailArrow direction="left" />
+            </span>
+            <span className="max-w-28">
+              <span className="block font-mono text-[9px] uppercase tracking-[0.24em] text-muted">Previous</span>
+              <span className="mt-0.5 block truncate text-xs font-semibold text-foreground">{previous.title}</span>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={() => go(1)}
+            aria-label="Next project"
+            className="group absolute right-2 top-1/2 z-30 hidden -translate-y-1/2 items-center gap-3 rounded-full border border-line bg-background/65 py-2 pl-4 pr-2 text-right text-muted backdrop-blur-md transition-all hover:border-brand-mint/50 hover:bg-surface/85 hover:text-foreground md:flex"
+          >
+            <span className="max-w-28">
+              <span className="block font-mono text-[9px] uppercase tracking-[0.24em] text-muted">Next</span>
+              <span className="mt-0.5 block truncate text-xs font-semibold text-foreground">{next.title}</span>
+            </span>
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-white/10 bg-white/[0.045] text-brand-mint transition-transform group-hover:translate-x-0.5">
+              <RailArrow direction="right" />
+            </span>
+          </button>
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <button
+            type="button"
+            onClick={() => go(-1)}
+            aria-label="Previous project"
+            className="grid h-11 w-11 place-items-center rounded-full border border-line text-muted transition-colors hover:border-brand-blue/50 hover:text-brand-mint md:hidden"
+          >
+            <RailArrow direction="left" />
+          </button>
+          <div className="flex items-center gap-2 rounded-full border border-line bg-background/35 px-3 py-2 backdrop-blur">
+            {PROJECTS.map((project, index) => (
+              <button
+                key={project.title}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                aria-label={`Show ${project.title}`}
+                className={`h-2 rounded-full transition-all ${
+                  index === activeIndex ? "w-7 bg-brand-mint" : "w-2 bg-line hover:bg-muted"
+                }`}
+              />
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={() => go(1)}
+            aria-label="Next project"
+            className="grid h-11 w-11 place-items-center rounded-full border border-line text-muted transition-colors hover:border-brand-blue/50 hover:text-brand-mint md:hidden"
+          >
+            <RailArrow direction="right" />
+          </button>
+        </div>
+        <p className="mt-4 text-center font-mono text-xs uppercase tracking-[0.3em] text-muted">
+          Swipe the rail · {String(activeIndex + 1).padStart(2, "0")} / {String(count).padStart(2, "0")}
+        </p>
+      </Reveal>
+
+      <Reveal y={18}>
+        <ProjectDossier project={active} index={activeIndex} />
+      </Reveal>
     </section>
   );
 }
