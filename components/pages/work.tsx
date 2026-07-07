@@ -119,35 +119,52 @@ function ArrowUpRight({ className = "h-4 w-4" }: { className?: string }) {
   );
 }
 
-/* A live window onto the real site: an iframe rendered at desktop width and
-   scaled to fit the card (kept non-interactive so it can't hijack scroll),
-   or a live screenshot for sites that refuse to be framed. */
-function LiveWindow({ project }: { project: Project }) {
+function PlayIcon({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M8 5.5v13l11-6.5-11-6.5Z" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+type PreviewMode = "live" | "shot";
+
+/* A window onto the real site. By default every card shows a static screenshot
+   ("shot") — cheap, no render loop. A live iframe ("live") only mounts when the
+   visitor explicitly loads it on the focused card. Live external sites (some
+   running their own WebGL) are heavy, and keeping one mounted while the site's
+   own 3D scene renders locks up scrolling, so we never run one during scroll. */
+function LiveWindow({ project, mode }: { project: Project; mode: PreviewMode }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(0.3);
   const [loaded, setLoaded] = useState(false);
   const [shotTry, setShotTry] = useState(0);
 
   useLayoutEffect(() => {
-    if (project.preview !== "live") return;
+    if (mode !== "live") return;
     const el = wrapRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => setScale(el.clientWidth / FRAME_W));
+    const measure = () => setScale(el.clientWidth / FRAME_W);
+    measure();
+    const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [project.preview]);
+  }, [mode]);
 
-  /* mShots (free, no key) captures sites that refuse to be framed. Its first
+  /* mShots (free, no key) captures sites for the static preview. Its first
      response is a "generating" placeholder, then it caches the real shot
      globally. Re-request on a timer (the extra param forces a browser refetch
      of the same capture job) until the real image lands. */
   useEffect(() => {
-    if (project.preview !== "shot") return;
+    if (mode !== "shot") return;
     const timers = [3000, 7000, 12000, 18000, 26000].map((ms) =>
       setTimeout(() => setShotTry((n) => n + 1), ms)
     );
     return () => timers.forEach(clearTimeout);
-  }, [project.preview]);
+  }, [mode]);
+
+  // show the skeleton again whenever the render mode changes (re)loads content
+  useEffect(() => setLoaded(false), [mode]);
 
   const shotSrc = `https://s.wordpress.com/mshots/v1/${encodeURIComponent(project.url)}?w=1280&h=850&r=${shotTry}`;
 
@@ -157,7 +174,7 @@ function LiveWindow({ project }: { project: Project }) {
       className="scanlines relative w-full overflow-hidden bg-surface"
       style={{ aspectRatio: `${1 / FRAME_RATIO}` }}
     >
-      {/* skeleton shimmer until the frame reports ready */}
+      {/* skeleton shimmer until the content reports ready */}
       <div
         className={`absolute inset-0 grid place-items-center bg-surface-2 transition-opacity duration-700 ${
           loaded ? "opacity-0" : "opacity-100"
@@ -167,7 +184,7 @@ function LiveWindow({ project }: { project: Project }) {
         <span className="text-gradient font-display text-7xl font-bold opacity-40">{project.monogram}</span>
       </div>
 
-      {project.preview === "live" ? (
+      {mode === "live" ? (
         <iframe
           src={project.url}
           title={`${project.title} — live preview`}
@@ -199,8 +216,22 @@ function LiveWindow({ project }: { project: Project }) {
   );
 }
 
-/* Browser-chrome shell around the live window, with a hover "Visit" overlay. */
-function BrowserFrame({ project, active = true }: { project: Project; active?: boolean }) {
+/* Browser-chrome shell around the live window. The focused card shows a
+   "Load live preview" button over its screenshot; tapping it mounts the real
+   site. Once live (or for screenshot-only sites) a hover "Visit" overlay
+   opens the site in a new tab. */
+function BrowserFrame({
+  project,
+  active = true,
+  mode,
+  onActivateLive,
+}: {
+  project: Project;
+  active?: boolean;
+  mode: PreviewMode;
+  onActivateLive?: () => void;
+}) {
+  const canGoLive = active && mode === "shot" && project.preview === "live";
   return (
     <div className="glass-card group/frame relative overflow-hidden">
       {/* browser chrome */}
@@ -225,10 +256,20 @@ function BrowserFrame({ project, active = true }: { project: Project; active?: b
         </span>
       </div>
 
-      {/* live window + visit overlay */}
+      {/* live window + overlay */}
       <div className="relative">
-        <LiveWindow project={project} />
-        {active && (
+        <LiveWindow project={project} mode={mode} />
+        {canGoLive ? (
+          <button
+            type="button"
+            onClick={onActivateLive}
+            className="absolute inset-0 z-10 grid place-items-center bg-background/15 transition-colors duration-300 hover:bg-background/30"
+          >
+            <span className="flex items-center gap-2 rounded-full border border-white/25 bg-background/80 px-5 py-2.5 text-sm font-semibold text-foreground backdrop-blur transition-transform duration-300 hover:scale-[1.03]">
+              <PlayIcon /> Load live preview
+            </span>
+          </button>
+        ) : active ? (
           <a
             href={project.url}
             target="_blank"
@@ -239,7 +280,7 @@ function BrowserFrame({ project, active = true }: { project: Project; active?: b
               Visit live site <ArrowUpRight />
             </span>
           </a>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -426,6 +467,9 @@ function SelectedWork({
   const stageRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number } | null>(null);
   const [dragging, setDragging] = useState(false);
+  // which card index the visitor has chosen to load as a live iframe (only the
+  // focused one runs; navigating away unmounts it, keeping scroll smooth)
+  const [liveIndex, setLiveIndex] = useState<number | null>(null);
   const [dim, setDim] = useState({ card: 620, side: 360, height: 522, compact: false });
   const count = PROJECTS.length;
   const active = PROJECTS[activeIndex];
@@ -532,7 +576,12 @@ function SelectedWork({
                 }}
               >
                 <div className={isActive ? "" : "pointer-events-none"}>
-                  <BrowserFrame project={project} active={isActive} />
+                  <BrowserFrame
+                    project={project}
+                    active={isActive}
+                    mode={isActive && project.preview === "live" && liveIndex === index ? "live" : "shot"}
+                    onActivateLive={() => setLiveIndex(index)}
+                  />
                 </div>
                 {!isActive && (
                   <span className="pointer-events-none absolute inset-0 rounded-[18px] bg-background/30" aria-hidden="true" />
