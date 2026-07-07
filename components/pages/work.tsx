@@ -481,15 +481,6 @@ function SelectedWork() {
             className="pointer-events-none absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-transparent via-brand-mint/35 to-transparent"
             aria-hidden="true"
           />
-          <div
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[72%] w-[min(62rem,84vw)] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border border-brand-mint/10 bg-brand-mint/[0.035]"
-            aria-hidden="true"
-          />
-          <div
-            className="pointer-events-none absolute left-1/2 top-10 h-[80%] w-[52%] -translate-x-1/2 rounded-[48px] opacity-60 blur-3xl"
-            style={{ background: `radial-gradient(60% 60% at 50% 42%, ${active.accent}38, transparent 72%)` }}
-            aria-hidden="true"
-          />
 
           {PROJECTS.map((project, index) => {
             const offset = relativeOffset(index);
