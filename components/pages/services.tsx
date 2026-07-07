@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { GhostButton, GradientButton, Reveal } from "@/components/ui";
+import { motion, useScroll, useSpring, useReducedMotion } from "motion/react";
+import { EASE, GhostButton, GradientButton, Reveal } from "@/components/ui";
 
 /* ── inline icon set (gradient-stroked to match the brand) ──────────── */
 const FILLED = new Set(["star", "heart", "play", "spark", "bolt"]);
@@ -140,6 +142,176 @@ const PACKAGES = [
   ["Signature", "A high-touch digital experience with motion, 3D, integrations, and ongoing support."],
 ];
 
+/* ── comet-route geometry (deterministic, module scope) ─────────────── */
+const ROUTE_SLOT = 210; // vertical px per station
+const ROUTE_TOP = 130; // px padding above first / below last node
+const ROUTE_H = ROUTE_TOP * 2 + (SERVICES.length - 1) * ROUTE_SLOT;
+// nodes alternate left/right in a 0–100 horizontal (percent) space
+const ROUTE_NODES = SERVICES.map((_, i) => ({ x: i % 2 === 0 ? 34 : 66, y: ROUTE_TOP + i * ROUTE_SLOT }));
+const ROUTE_D = (() => {
+  let d = `M ${ROUTE_NODES[0].x} ${ROUTE_NODES[0].y}`;
+  for (let i = 1; i < ROUTE_NODES.length; i++) {
+    const a = ROUTE_NODES[i - 1];
+    const b = ROUTE_NODES[i];
+    const my = (a.y + b.y) / 2; // vertical-tangent control points → smooth S-weave
+    d += ` C ${a.x} ${my} ${b.x} ${my} ${b.x} ${b.y}`;
+  }
+  return d;
+})();
+
+/* A styled rocket that reads as dimensional: gradient body, cockpit, fins and
+   a flickering exhaust. Nose points "up" by default; the route rotates it to
+   follow the curve's tangent. */
+function Rocket() {
+  return (
+    <div style={{ filter: "drop-shadow(0 0 12px rgba(92,240,218,0.75))" }}>
+      <svg width="30" height="46" viewBox="0 0 30 46" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="rk-body" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#eafffb" />
+            <stop offset="0.5" stopColor="#5cf0da" />
+            <stop offset="1" stopColor="#12c2b0" />
+          </linearGradient>
+        </defs>
+        {/* exhaust flame */}
+        <path className="rocket-flame" d="M11 29 L15 45 L19 29 Z" fill="#2ee6a0" />
+        {/* fins */}
+        <path d="M9 24 L4 33 L11 29 Z" fill="#0fbfc0" />
+        <path d="M21 24 L26 33 L19 29 Z" fill="#0fbfc0" />
+        {/* body */}
+        <path d="M15 2 C22 9 22 22 19 30 L11 30 C8 22 8 9 15 2 Z" fill="url(#rk-body)" />
+        {/* cockpit */}
+        <circle cx="15" cy="14" r="3.2" fill="#03332a" stroke="#eafffb" strokeWidth="1" />
+      </svg>
+    </div>
+  );
+}
+
+/* The comet route: the eight stations threaded along a curved trail. The path
+   lights up as you scroll and a rocket flies down it — rotating to follow the
+   curve — while each station swings in from its side. (Curved layout is md+;
+   mobile stacks the stations cleanly.) */
+function ServiceRoute() {
+  const reduce = useReducedMotion();
+  const track = useRef<HTMLDivElement>(null);
+  const basePath = useRef<SVGPathElement>(null);
+  const rocket = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({ target: track, offset: ["start 58%", "end 82%"] });
+  const fill = useSpring(scrollYProgress, { stiffness: 70, damping: 24, mass: 0.4 });
+
+  useEffect(() => {
+    if (reduce) return;
+    const place = () => {
+      const path = basePath.current;
+      const tr = track.current;
+      const rk = rocket.current;
+      if (!path || !tr || !rk) return;
+      const len = path.getTotalLength();
+      const t = Math.min(1, Math.max(0, fill.get()));
+      const pt = path.getPointAtLength(t * len);
+      const pt2 = path.getPointAtLength(Math.min(len, t * len + 1));
+      const w = tr.offsetWidth || 1;
+      // tangent measured in on-screen px (x is stretched across the width)
+      const dxPx = ((pt2.x - pt.x) / 100) * w;
+      const dyPx = pt2.y - pt.y;
+      const deg = (Math.atan2(dyPx, dxPx) * 180) / Math.PI + 90;
+      rk.style.left = `${pt.x}%`;
+      rk.style.top = `${pt.y}px`;
+      rk.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
+    };
+    place();
+    const raf = requestAnimationFrame(place);
+    const unsub = fill.on("change", place);
+    window.addEventListener("resize", place);
+    return () => {
+      cancelAnimationFrame(raf);
+      unsub();
+      window.removeEventListener("resize", place);
+    };
+  }, [fill, reduce]);
+
+  return (
+    <>
+      {/* ── curved rocket route (md+) ── */}
+      <div ref={track} className="relative mx-auto mt-16 hidden max-w-5xl md:block" style={{ height: ROUTE_H }}>
+        <svg className="absolute inset-0 h-full w-full" viewBox={`0 0 100 ${ROUTE_H}`} preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="route-grad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2={ROUTE_H}>
+              <stop offset="0" stopColor="#16b6d8" />
+              <stop offset="0.5" stopColor="#12c2b0" />
+              <stop offset="1" stopColor="#2ee6a0" />
+            </linearGradient>
+          </defs>
+          <path ref={basePath} d={ROUTE_D} fill="none" stroke="rgba(150,200,205,0.16)" strokeWidth="2" vectorEffect="non-scaling-stroke" strokeLinecap="round" />
+          <motion.path
+            d={ROUTE_D}
+            fill="none"
+            stroke="url(#route-grad)"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+            style={{ pathLength: reduce ? 1 : fill }}
+          />
+        </svg>
+
+        {SERVICES.map((service, i) => {
+          const node = ROUTE_NODES[i];
+          const left = i % 2 === 0;
+          return (
+            <div key={service.title}>
+              {/* station node */}
+              <motion.span
+                className="absolute z-10 grid h-4 w-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border border-brand-mint/70 bg-background"
+                style={{ left: `${node.x}%`, top: node.y }}
+                initial={reduce ? { opacity: 0 } : { scale: 0, opacity: 0 }}
+                whileInView={{ scale: 1, opacity: 1 }}
+                viewport={{ once: true, margin: "-110px" }}
+                transition={{ duration: 0.5, ease: EASE }}
+                aria-hidden="true"
+              >
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-mint" />
+              </motion.span>
+
+              {/* station card on its side of the curve */}
+              <motion.div
+                className={`absolute flex -translate-y-1/2 ${left ? "justify-end" : "justify-start"}`}
+                style={{
+                  top: node.y,
+                  left: left ? 0 : `${node.x + 3}%`,
+                  right: left ? `${100 - node.x + 3}%` : 0,
+                }}
+                initial={reduce ? { opacity: 0 } : { opacity: 0, x: left ? -70 : 70, filter: "blur(6px)" }}
+                whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}
+                viewport={{ once: true, margin: "-110px" }}
+                transition={{ duration: 0.75, ease: EASE }}
+              >
+                <div className="w-full max-w-sm">
+                  <StationCard service={service} index={i} />
+                </div>
+              </motion.div>
+            </div>
+          );
+        })}
+
+        {!reduce && (
+          <div ref={rocket} className="absolute left-0 top-0 z-20" aria-hidden="true">
+            <Rocket />
+          </div>
+        )}
+      </div>
+
+      {/* ── stacked stations (mobile) ── */}
+      <div className="mt-12 space-y-5 md:hidden">
+        {SERVICES.map((service, i) => (
+          <Reveal key={service.title} delay={(i % 2) * 0.05}>
+            <StationCard service={service} index={i} />
+          </Reveal>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function StationCard({ service, index }: { service: (typeof SERVICES)[number]; index: number }) {
   return (
     <div className="group relative h-full overflow-hidden rounded-2xl border border-line bg-surface/40 p-6 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:border-brand-violet/40">
@@ -152,7 +324,7 @@ function StationCard({ service, index }: { service: (typeof SERVICES)[number]; i
         <span className="font-mono text-[11px] uppercase tracking-[0.2em] text-muted">
           Station {String(index + 1).padStart(2, "0")}
         </span>
-        <div className="mt-5 grid h-14 w-14 place-items-center rounded-full border border-white/10 bg-gradient-to-br from-brand-blue/20 to-brand-violet/25 shadow-[0_0_24px_rgba(107,102,255,0.35)]">
+        <div className="mt-5 grid h-14 w-14 place-items-center rounded-full border border-white/10 bg-gradient-to-br from-brand-blue/20 to-brand-violet/25 shadow-[0_0_24px_rgba(18,194,176,0.35)]">
           <Icon name={service.icon} className="h-6 w-6" />
         </div>
         <h3 className="font-display mt-6 text-xl font-bold">{service.title}</h3>
@@ -179,9 +351,9 @@ export function ServicesPage() {
       <svg width="0" height="0" className="absolute" aria-hidden="true">
         <defs>
           <linearGradient id="svc-grad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#3777ff" />
-            <stop offset="0.55" stopColor="#6b66ff" />
-            <stop offset="1" stopColor="#ce4fff" />
+            <stop offset="0" stopColor="#16b6d8" />
+            <stop offset="0.55" stopColor="#12c2b0" />
+            <stop offset="1" stopColor="#2ee6a0" />
           </linearGradient>
         </defs>
       </svg>
@@ -231,13 +403,7 @@ export function ServicesPage() {
           </div>
         </Reveal>
 
-        <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {SERVICES.map((service, i) => (
-            <Reveal key={service.title} delay={(i % 4) * 0.06}>
-              <StationCard service={service} index={i} />
-            </Reveal>
-          ))}
-        </div>
+        <ServiceRoute />
       </section>
 
       {/* ── stats ────────────────────────────────────────────────────── */}

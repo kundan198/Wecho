@@ -18,7 +18,7 @@ const PROJECTS = [
     build:
       "A cinematic, dark personal site with an immersive intro, visual storytelling through project galleries, and a structure built to be read by recruiters in under a minute.",
     echo: "A portfolio that feels like a launch sequence — memorable enough to stand out in a stack of resumes.",
-    accent: "#3777ff",
+    accent: "#16b6d8",
   },
   {
     monogram: "G",
@@ -33,7 +33,7 @@ const PROJECTS = [
     build:
       "Partnering with Pocketfriend, we shaped a fashion-editorial experience: rich visuals, elegant type, and a flow that moves visitors from inspiration to action without friction.",
     echo: "A brand presence that looks premium on every screen and echoes the name it carries.",
-    accent: "#ce4fff",
+    accent: "#2ee6a0",
   },
   {
     monogram: "O",
@@ -48,7 +48,7 @@ const PROJECTS = [
     build:
       "A focused web-app experience with structured navigation, polished interface states, and a clean visual system built for teams that need to move quickly.",
     echo: "A sharper product presence that makes the platform feel useful, modern, and ready for real business operations.",
-    accent: "#56d7ff",
+    accent: "#5cf0da",
   },
   {
     monogram: "H",
@@ -63,7 +63,7 @@ const PROJECTS = [
     build:
       "An atmospheric, neon-accented site with studio tours, equipment inventory, artist testimonials, and a booking flow that turns visitors into sessions.",
     echo: "The studio's online presence finally matches the room — artists book before they've even walked in.",
-    accent: "#6b66ff",
+    accent: "#12c2b0",
   },
 ];
 
@@ -242,7 +242,7 @@ function PanelCard({ project, index, total }: { project: Project; index: number;
     <div
       onMouseMove={onMove}
       onMouseLeave={onLeave}
-      className="glass-card sheen group relative overflow-hidden shadow-[0_42px_120px_-46px_rgba(55,119,255,0.45)]"
+      className="glass-card sheen group relative overflow-hidden shadow-[0_42px_120px_-46px_rgba(22,182,216,0.45)]"
     >
       {/* cursor glare */}
       <div
@@ -463,7 +463,7 @@ function WorkHero() {
         <div className="max-w-3xl">
           <p className="flex items-center gap-3 font-mono text-sm font-semibold uppercase tracking-[0.42em] text-gradient">
             <span className="grid h-5 w-5 place-items-center rounded-full border border-brand-violet/35 bg-brand-violet/15">
-              <span className="h-2 w-2 rounded-full bg-brand-violet shadow-[0_0_18px_rgba(107,102,255,0.9)]" />
+              <span className="h-2 w-2 rounded-full bg-brand-violet shadow-[0_0_18px_rgba(18,194,176,0.9)]" />
             </span>
             Featured Projects
           </p>
@@ -481,7 +481,7 @@ function WorkHero() {
         <div className="mt-8 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
           {HERO_CHIPS.map((chip) => (
             <div key={chip.title} className="flex items-center gap-4 bg-background/50 p-5 backdrop-blur">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-violet/20 bg-brand-violet/10 text-brand-violet shadow-[0_0_34px_rgba(107,102,255,0.18)]">
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-violet/20 bg-brand-violet/10 text-brand-violet shadow-[0_0_34px_rgba(18,194,176,0.18)]">
                 <ChipIcon type={chip.icon} />
               </span>
               <span>
@@ -499,7 +499,7 @@ function WorkHero() {
 export function WorkPage() {
   return (
     <main className="relative">
-      <div className="pointer-events-none fixed inset-0 bg-background/55" aria-hidden="true" />
+      <div className="pointer-events-none fixed inset-0 bg-background/75" aria-hidden="true" />
 
       <WorkHero />
 

@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #03030d;
-  --foreground: #f4f3ff;
-  --muted: #908da7;
-  --surface: #070716;
-  --surface-2: #101027;
-  --line: rgba(163, 161, 205, 0.13);
-  --brand-blue: #3777ff;
-  --brand-violet: #6b66ff;
-  --brand-purple: #8b5cf6;
-  --brand-magenta: #ce4fff;
-  --brand-mint: #56d7ff;
-  --brand-teal: #6370ff;
+  --background: #03090c;
+  --foreground: #f1fbfa;
+  --muted: #8ba3a5;
+  --surface: #061217;
+  --surface-2: #0c1c22;
+  --line: rgba(150, 200, 205, 0.13);
+  --brand-blue: #16b6d8;
+  --brand-violet: #12c2b0;
+  --brand-purple: #10b981;
+  --brand-magenta: #2ee6a0;
+  --brand-mint: #5cf0da;
+  --brand-teal: #0fbfc0;
 }
 
 @theme inline {
@@ -39,9 +39,9 @@ html {
 
 body {
   background:
-    radial-gradient(ellipse 75% 45% at 80% 35%, rgba(37, 18, 92, 0.46), transparent 65%),
-    radial-gradient(ellipse 60% 40% at 0% 50%, rgba(22, 51, 120, 0.18), transparent 65%),
-    radial-gradient(ellipse 80% 50% at 50% 110%, rgba(68, 19, 90, 0.16), transparent 62%),
+    radial-gradient(ellipse 75% 45% at 80% 35%, rgba(13, 82, 78, 0.46), transparent 65%),
+    radial-gradient(ellipse 60% 40% at 0% 50%, rgba(16, 70, 96, 0.18), transparent 65%),
+    radial-gradient(ellipse 80% 50% at 50% 110%, rgba(16, 92, 66, 0.16), transparent 62%),
     var(--background);
   color: var(--foreground);
   font-family: var(--font-jakarta), system-ui, sans-serif;
@@ -88,9 +88,31 @@ body {
   border: 1px solid rgba(238, 244, 255, 0.11);
 }
 
+/* Flickering rocket exhaust on the services route */
+@keyframes rocket-flame {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scaleY(0.55);
+    opacity: 0.7;
+  }
+}
+.rocket-flame {
+  transform-origin: 15px 29px;
+  animation: rocket-flame 0.26s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rocket-flame {
+    animation: none;
+  }
+}
+
 /* Darker glass for content that sits over the bright WebGL world */
 .panel {
-  background: rgba(6, 6, 20, 0.44);
+  background: rgba(6, 16, 20, 0.44);
   backdrop-filter: blur(16px) saturate(1.15);
   border: 1px solid rgba(238, 244, 255, 0.1);
   border-radius: 20px;
@@ -98,7 +120,7 @@ body {
 
 /* Legibility + neon lift for headlines floating on the 3D stage */
 .glow-text {
-  text-shadow: 0 2px 34px rgba(4, 4, 14, 0.9), 0 0 60px rgba(107, 102, 255, 0.22);
+  text-shadow: 0 2px 34px rgba(4, 4, 14, 0.9), 0 0 60px rgba(18, 194, 176, 0.22);
 }
 
 /* Soft radial scrim to keep body copy readable over the scene */
@@ -123,7 +145,7 @@ body {
 }
 
 .card:hover {
-  border-color: rgba(55, 119, 255, 0.45);
+  border-color: rgba(22, 182, 216, 0.45);
 }
 
 /* Gradient border card */
@@ -132,7 +154,7 @@ body {
   border: 1px solid transparent;
   border-radius: 16px;
   background:
-    linear-gradient(160deg, #12234a, #0c1830 60%) padding-box,
+    linear-gradient(160deg, #0c3a44, #08202a 60%) padding-box,
     linear-gradient(140deg, var(--brand-blue), var(--brand-violet), var(--brand-magenta))
       border-box;
 }
@@ -222,7 +244,7 @@ body {
    and faint white border as .glass / .panel, but dark enough (0.72) to cover
    cleanly as the cards stack, so the layer beneath frosts through the blur. */
 .glass-card {
-  background: rgba(9, 10, 26, 0.72);
+  background: rgba(8, 18, 24, 0.72);
   backdrop-filter: blur(18px) saturate(1.12);
   -webkit-backdrop-filter: blur(18px) saturate(1.12);
   border: 1px solid rgba(238, 244, 255, 0.12);
@@ -233,10 +255,10 @@ body {
 @keyframes core-pulse {
   0%,
   100% {
-    box-shadow: 0 0 24px rgba(107, 102, 255, 0.35);
+    box-shadow: 0 0 24px rgba(18, 194, 176, 0.35);
   }
   50% {
-    box-shadow: 0 0 52px rgba(206, 79, 255, 0.5);
+    box-shadow: 0 0 52px rgba(46, 230, 160, 0.5);
   }
 }
 

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, useMotionValue, useSpring } from "motion/react";
+import { motion } from "motion/react";
 import { Logo, LogoMark } from "@/components/Logo";
 import { Magnetic } from "@/components/ui";
 
@@ -15,34 +15,138 @@ const NAV_LINKS = [
   { href: "/contact", label: "Contact" },
 ];
 
-/* Soft glow that follows the cursor */
+/* Comet cursor: a glowing head follows the pointer with a springy lagging
+   ring, trailing a tail of tiny teal star-particles that drift and fade —
+   a small comet streaking through the space scene. Canvas-based + additive
+   blending so it stays crisp and cheap. Desktop + fine-pointer only. */
+type Particle = { x: number; y: number; vx: number; vy: number; life: number; size: number; color: string };
+
 export function CursorGlow() {
-  const x = useMotionValue(-400);
-  const y = useMotionValue(-400);
-  const sx = useSpring(x, { stiffness: 60, damping: 18 });
-  const sy = useSpring(y, { stiffness: 60, damping: 18 });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    const move = (e: MouseEvent) => {
-      x.set(e.clientX - 280);
-      y.set(e.clientY - 280);
-    };
-    window.addEventListener("mousemove", move);
-    return () => window.removeEventListener("mousemove", move);
-  }, [x, y]);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
 
-  return (
-    <motion.div
-      aria-hidden="true"
-      className="pointer-events-none fixed left-0 top-0 z-[5] hidden h-[560px] w-[560px] rounded-full md:block"
-      style={{
-        x: sx,
-        y: sy,
-        background:
-          "radial-gradient(circle, rgba(139,92,246,0.10), rgba(59,130,246,0.05) 40%, transparent 65%)",
-      }}
-    />
-  );
+    const COLORS = ["#5cf0da", "#12c2b0", "#16b6d8", "#2ee6a0"];
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    let w = 0;
+    let h = 0;
+
+    const resize = () => {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const particles: Particle[] = [];
+    let mx = -100;
+    let my = -100;
+    let rx = -100; // springy ring position
+    let ry = -100;
+    let lastX = -100;
+    let lastY = -100;
+    let started = false;
+
+    const onMove = (e: MouseEvent) => {
+      mx = e.clientX;
+      my = e.clientY;
+      if (!started) {
+        lastX = rx = mx;
+        lastY = ry = my;
+        started = true;
+      }
+      // seed particles along the travelled segment → a continuous tail
+      const dx = mx - lastX;
+      const dy = my - lastY;
+      const steps = Math.min(6, Math.floor(Math.hypot(dx, dy) / 6));
+      for (let i = 0; i <= steps; i++) {
+        const t = steps ? i / steps : 0;
+        particles.push({
+          x: lastX + dx * t,
+          y: lastY + dy * t,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7 - 0.15,
+          life: 1,
+          size: 0.8 + Math.random() * 2.2,
+          color: COLORS[(Math.random() * COLORS.length) | 0],
+        });
+      }
+      lastX = mx;
+      lastY = my;
+      if (particles.length > 130) particles.splice(0, particles.length - 130);
+    };
+    window.addEventListener("mousemove", onMove);
+
+    let raf = 0;
+    const tick = () => {
+      raf = requestAnimationFrame(tick);
+      ctx.clearRect(0, 0, w, h);
+      if (!started) return;
+
+      ctx.globalCompositeOperation = "lighter";
+
+      // star-dust tail
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= 0.03;
+        p.size *= 0.985;
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = Math.max(0, p.life) * 0.75;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // glowing comet head
+      ctx.globalAlpha = 1;
+      const head = ctx.createRadialGradient(mx, my, 0, mx, my, 22);
+      head.addColorStop(0, "rgba(220,255,250,0.9)");
+      head.addColorStop(0.35, "rgba(92,240,218,0.35)");
+      head.addColorStop(1, "rgba(92,240,218,0)");
+      ctx.fillStyle = head;
+      ctx.beginPath();
+      ctx.arc(mx, my, 22, 0, Math.PI * 2);
+      ctx.fill();
+
+      // springy lagging ring
+      rx += (mx - rx) * 0.16;
+      ry += (my - ry) * 0.16;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.globalAlpha = 0.5;
+      ctx.strokeStyle = "rgba(92,240,218,0.6)";
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.arc(rx, ry, 15, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    };
+    tick();
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMove);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} aria-hidden="true" className="pointer-events-none fixed inset-0 z-[5] hidden md:block" />;
 }
 
 /* Floating capsule navigation */
@@ -183,7 +287,7 @@ export function ChatButton() {
         <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden>
           <path d="M4 5h16v10H8l-4 4V5z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
         </svg>
-        <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full border-2 border-[#0b0a24] bg-green-400" />
+        <span className="absolute right-3 top-3 h-2.5 w-2.5 rounded-full border-2 border-[#06131a] bg-green-400" />
       </Link>
     </Magnetic>
   );
