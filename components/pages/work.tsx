@@ -330,7 +330,7 @@ function ProjectDossier({ project, index }: { project: Project; index: number })
   );
 }
 
-function WorkHero() {
+function WorkHero({ activeIndex, onSelect }: { activeIndex: number; onSelect: (index: number) => void }) {
   return (
     <section className="scrim relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-40 md:pt-44">
       <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
@@ -372,31 +372,41 @@ function WorkHero() {
                 <span className="font-mono text-[11px] text-muted">04 / 04</span>
               </div>
               <ul>
-                {PROJECTS.map((p, i) => (
-                  <li key={p.title}>
-                    <a
-                      href={`#case-${i}`}
-                      className="group flex items-center gap-4 border-b border-line px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03]"
-                    >
-                      <span className="font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
-                      <span
-                        className="font-display grid h-9 w-9 flex-none place-items-center rounded-lg text-sm font-bold text-white"
-                        style={{ backgroundColor: p.accent }}
+                {PROJECTS.map((p, i) => {
+                  const current = i === activeIndex;
+                  return (
+                    <li key={p.title}>
+                      <a
+                        href="#selected-work"
+                        onClick={() => onSelect(i)}
+                        aria-current={current}
+                        className={`group flex w-full items-center gap-4 border-b border-line px-5 py-4 text-left transition-colors last:border-b-0 hover:bg-white/[0.03] ${
+                          current ? "bg-white/[0.04]" : ""
+                        }`}
                       >
-                        {p.monogram}
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-display font-semibold">{p.title}</span>
-                        <span className="block truncate font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
-                          {p.kind}
+                        <span className="font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
+                        <span
+                          className="font-display grid h-9 w-9 flex-none place-items-center rounded-lg text-sm font-bold text-white"
+                          style={{ backgroundColor: p.accent }}
+                        >
+                          {p.monogram}
                         </span>
-                      </span>
-                      <span className="flex h-8 w-8 flex-none place-items-center justify-center rounded-full border border-line text-muted transition-colors group-hover:border-brand-mint/50 group-hover:text-brand-mint">
-                        <ArrowUpRight className="h-3.5 w-3.5" />
-                      </span>
-                    </a>
-                  </li>
-                ))}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate font-display font-semibold">{p.title}</span>
+                          <span className="block truncate font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                            {p.kind}
+                          </span>
+                        </span>
+                        <span
+                          className="flex h-8 w-8 flex-none place-items-center justify-center rounded-full border text-muted transition-colors group-hover:border-brand-mint/50 group-hover:text-brand-mint"
+                          style={current ? { borderColor: p.accent, color: p.accent } : { borderColor: "var(--line)" }}
+                        >
+                          <ArrowUpRight className="h-3.5 w-3.5" />
+                        </span>
+                      </a>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           </Reveal>
@@ -406,10 +416,15 @@ function WorkHero() {
   );
 }
 
-function SelectedWork() {
+function SelectedWork({
+  activeIndex,
+  setActiveIndex,
+}: {
+  activeIndex: number;
+  setActiveIndex: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const stageRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number } | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
   const [dragging, setDragging] = useState(false);
   const [dim, setDim] = useState({ card: 620, side: 360, height: 522, compact: false });
   const count = PROJECTS.length;
@@ -467,7 +482,7 @@ function SelectedWork() {
   };
 
   return (
-    <section className="relative z-10 mx-auto max-w-7xl px-6 pb-28">
+    <section id="selected-work" className="relative z-10 mx-auto max-w-7xl scroll-mt-28 px-6 pb-28">
       <Reveal>
         <div
           ref={stageRef}
@@ -665,12 +680,14 @@ function DemoDirections() {
 }
 
 export function WorkPage() {
+  const [activeIndex, setActiveIndex] = useState(0);
+
   return (
     <main className="relative">
       <div className="pointer-events-none fixed inset-0 bg-background/75" aria-hidden="true" />
 
-      <WorkHero />
-      <SelectedWork />
+      <WorkHero activeIndex={activeIndex} onSelect={setActiveIndex} />
+      <SelectedWork activeIndex={activeIndex} setActiveIndex={setActiveIndex} />
       <DemoDirections />
     </main>
   );
