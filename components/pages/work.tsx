@@ -2,12 +2,13 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { GradientButton, Reveal, SectionTag } from "@/components/ui";
+import { GradientButton, Reveal, SectionTag, TiltCard } from "@/components/ui";
 
 const PROJECTS = [
   {
     monogram: "K",
     title: "Kundan Srinivas",
+    kind: "Personal Portfolio",
     domain: "kundansrinivas.vercel.app",
     url: "https://kundansrinivas.vercel.app",
     collab: null,
@@ -18,11 +19,17 @@ const PROJECTS = [
     build:
       "A cinematic, dark personal site with an immersive intro, visual storytelling through project galleries, and a structure built to be read by recruiters in under a minute.",
     echo: "A portfolio that feels like a launch sequence — memorable enough to stand out in a stack of resumes.",
+    metrics: [
+      ["< 60s", "To grasp the story"],
+      ["3D", "Immersive intro"],
+      ["100%", "Custom built"],
+    ],
     accent: "#16b6d8",
   },
   {
     monogram: "G",
     title: "Glamora",
+    kind: "Beauty Brand",
     domain: "glamore-ten.vercel.app",
     url: "https://glamore-ten.vercel.app",
     collab: { name: "Pocketfriend", url: "https://pocketfriend.io" },
@@ -33,11 +40,17 @@ const PROJECTS = [
     build:
       "Partnering with Pocketfriend, we shaped a fashion-editorial experience: rich visuals, elegant type, and a flow that moves visitors from inspiration to action without friction.",
     echo: "A brand presence that looks premium on every screen and echoes the name it carries.",
+    metrics: [
+      ["Editorial", "Visual language"],
+      ["+180%", "Engagement"],
+      ["1:1", "Design partnership"],
+    ],
     accent: "#2ee6a0",
   },
   {
     monogram: "O",
     title: "OpsFlow",
+    kind: "Workflow Product",
     domain: "opsflow-27e09.web.app",
     url: "https://opsflow-27e09.web.app",
     collab: null,
@@ -48,11 +61,17 @@ const PROJECTS = [
     build:
       "A focused web-app experience with structured navigation, polished interface states, and a clean visual system built for teams that need to move quickly.",
     echo: "A sharper product presence that makes the platform feel useful, modern, and ready for real business operations.",
+    metrics: [
+      ["Clear", "From first screen"],
+      ["System", "Reusable UI states"],
+      ["Fast", "Operational feel"],
+    ],
     accent: "#5cf0da",
   },
   {
     monogram: "H",
     title: "High Life Studios",
+    kind: "Recording Studio",
     domain: "highlifestudios.com",
     url: "https://highlifestudios.com",
     collab: null,
@@ -63,82 +82,42 @@ const PROJECTS = [
     build:
       "An atmospheric, neon-accented site with studio tours, equipment inventory, artist testimonials, and a booking flow that turns visitors into sessions.",
     echo: "The studio's online presence finally matches the room — artists book before they've even walked in.",
+    metrics: [
+      ["Neon", "Atmospheric design"],
+      ["SEO", "Found on search"],
+      ["Booking", "Visitors to sessions"],
+    ],
     accent: "#12c2b0",
   },
 ];
 
 type Project = (typeof PROJECTS)[number];
 
-const SCRAMBLE = "!<>-_\\/[]{}=+*^?#$%&";
-
-const HERO_CHIPS = [
-  { icon: "rocket", title: "Built for impact", text: "Results that matter" },
-  { icon: "spark", title: "Pixel perfect", text: "Crafted with precision" },
-  { icon: "shield", title: "Secure & scalable", text: "Built to grow with you" },
+const INDEX_STATS = [
+  ["04", "Live projects"],
+  ["100%", "Real, shippable sites"],
+  ["1:1", "Founder-level care"],
 ];
 
-const METRICS = [
-  ["+180%", "Engagement"],
-  ["2.4x", "Session Time"],
-  ["98/100", "Performance"],
+const DEMOS = [
+  "Restaurant Website",
+  "Real Estate Website",
+  "Clinic Website",
+  "E-commerce Store",
+  "Startup Landing Page",
+  "Local Service Business",
 ];
-
-function ChipIcon({ type }: { type: string }) {
-  if (type === "rocket") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-        <path d="M5 15c-1.5 1.5-2 5-2 5s3.5-.5 5-2M9 15l-3-3c3-7 8-9 12-9 0 4-2 9-9 12l-3-3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        <circle cx="14.5" cy="9.5" r="1.6" stroke="currentColor" strokeWidth="1.7" />
-      </svg>
-    );
-  }
-  if (type === "shield") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-        <path d="M12 3l7 3v5c0 5-7 10-7 10s-7-5-7-10V6l7-3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-        <path d="M9 12l2 2 4-5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" className="h-6 w-6" aria-hidden="true">
-      <path d="M12 3l2 5.8L20 11l-6 2.2L12 19l-2-5.8L4 11l6-2.2L12 3Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-      <path d="M19 4v3M20.5 5.5h-3M5 17v2M6 18H4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/* Title resolves out of signal noise once, on mount. */
-function DecodeText({ text }: { text: string }) {
-  const [out, setOut] = useState(text);
-  useEffect(() => {
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const duration = Math.min(900, 300 + text.length * 24);
-    let raf = 0;
-    let start: number | null = null;
-    const tick = (now: number) => {
-      if (start === null) start = now;
-      const t = (now - start) / duration;
-      if (t >= 1) {
-        setOut(text);
-        return;
-      }
-      const n = Math.floor(t * text.length);
-      let s = text.slice(0, n);
-      for (let i = n; i < text.length; i++) {
-        s += text[i] === " " ? " " : SCRAMBLE[Math.floor(Math.random() * SCRAMBLE.length)];
-      }
-      setOut(s);
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [text]);
-  return <>{out}</>;
-}
 
 const FRAME_W = 1280;
 const FRAME_RATIO = 0.66; // preview window aspect (h / w)
+
+function ArrowUpRight({ className = "h-4 w-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M7 17L17 7M8 7h9v9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 /* A live window onto the real site: an iframe rendered at desktop width and
    scaled to fit the card (kept non-interactive so it can't hijack scroll),
@@ -220,278 +199,297 @@ function LiveWindow({ project }: { project: Project }) {
   );
 }
 
-/* One project as a landscape panel (live window | dossier). Rendered as a
-   pinned card in the scroll-stack. */
-function PanelCard({ project, index, total }: { project: Project; index: number; total: number }) {
-  const glareRef = useRef<HTMLDivElement>(null);
-  const [open, setOpen] = useState(false);
-
-  const onMove = (e: React.MouseEvent) => {
-    if (!glareRef.current) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = ((e.clientX - r.left) / r.width) * 100;
-    const py = ((e.clientY - r.top) / r.height) * 100;
-    glareRef.current.style.background = `radial-gradient(520px circle at ${px}% ${py}%, rgba(255,255,255,0.08), transparent 55%)`;
-    glareRef.current.style.opacity = "1";
-  };
-  const onLeave = () => {
-    if (glareRef.current) glareRef.current.style.opacity = "0";
-  };
-
+/* Browser-chrome shell around the live window, with a hover "Visit" overlay. */
+function BrowserFrame({ project }: { project: Project }) {
   return (
-    <div
-      onMouseMove={onMove}
-      onMouseLeave={onLeave}
-      className="glass-card sheen group relative overflow-hidden shadow-[0_42px_120px_-46px_rgba(22,182,216,0.45)]"
-    >
-      {/* cursor glare */}
-      <div
-        ref={glareRef}
-        className="pointer-events-none absolute inset-0 z-30 opacity-0 transition-opacity duration-300"
-        aria-hidden="true"
-      />
-
-      <div className="grid lg:grid-cols-[1.16fr_0.84fr]">
-        {/* ── left: the live window ────────────────────────────── */}
-        <div className="flex flex-col border-b border-line lg:border-b-0 lg:border-r">
-          {/* browser chrome */}
-          <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-            <div className="flex gap-1.5" aria-hidden="true">
-              <span className="h-2.5 w-2.5 rounded-full bg-brand-magenta/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-brand-violet/70" />
-              <span className="h-2.5 w-2.5 rounded-full bg-brand-mint/70" />
-            </div>
-            <div className="flex flex-1 items-center gap-2 truncate rounded-full border border-line bg-background/60 px-3 py-1">
-              <span className="text-brand-mint" aria-hidden="true">
-                ⬤
-              </span>
-              <span className="truncate font-mono text-[11px] text-muted">{project.domain}</span>
-            </div>
-            <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-emerald-300">
-              <span className="relative flex h-1.5 w-1.5">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-              </span>
-              Live
-            </span>
-          </div>
-
-          {/* live window → opens the real site on click */}
-          <a href={project.url} target="_blank" rel="noopener noreferrer" className="relative block flex-1">
-            <LiveWindow project={project} />
-            <div className="absolute inset-0 z-10 grid place-items-center bg-background/45 opacity-0 backdrop-blur-[1px] transition-opacity duration-300 group-hover:opacity-100">
-              <span className="rounded-full border border-white/25 bg-background/70 px-5 py-2 text-sm font-semibold">
-                Visit live ↗
-              </span>
-            </div>
-          </a>
+    <div className="glass-card group/frame relative overflow-hidden">
+      {/* browser chrome */}
+      <div className="flex items-center gap-3 border-b border-line px-4 py-3">
+        <div className="flex gap-1.5" aria-hidden="true">
+          <span className="h-2.5 w-2.5 rounded-full bg-brand-magenta/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-brand-violet/70" />
+          <span className="h-2.5 w-2.5 rounded-full bg-brand-mint/70" />
         </div>
-
-        {/* ── right: the dossier ───────────────────────────────── */}
-          <div className="flex flex-col p-6 md:p-8">
-          <div className="flex items-baseline justify-between font-mono text-xs text-muted">
-            <span>CH·{String(index + 1).padStart(2, "0")}</span>
-            <span aria-hidden="true">
-              {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
-            </span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
-            <h2 className="font-display text-2xl font-bold md:text-3xl">
-              <DecodeText text={project.title} />
-            </h2>
-            {project.collab && (
-              <a
-                href={project.collab.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="rounded-full border border-brand-magenta/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-magenta transition-colors hover:border-brand-magenta hover:text-foreground"
-              >
-                With {project.collab.name}
-              </a>
-            )}
-          </div>
-
-          <p className="mt-3 leading-relaxed text-muted">{project.brief}</p>
-
-          <div className="mt-4 flex flex-wrap gap-2">
-            {project.services.map((service) => (
-              <span key={service} className="rounded-full border border-line bg-background/35 px-3 py-1 text-xs font-semibold text-muted">
-                {service}
-              </span>
-            ))}
-          </div>
-
-          <p className="mt-6 font-mono text-xs uppercase tracking-widest text-brand-mint">
-            Signal log
-          </p>
-          <div className="mt-3 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-3">
-            {METRICS.map(([value, label]) => (
-              <div key={label} className="bg-background/55 p-4">
-                <p className="text-gradient font-display text-xl font-bold">{value}</p>
-                <p className="mt-1 text-xs text-muted">{label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div
-            className="grid transition-[grid-template-rows] duration-500 ease-out"
-            style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
-          >
-            <div className="overflow-hidden">
-              <div className="mt-4 space-y-4 border-t border-line pt-4">
-                <div>
-                  <h3 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The build</h3>
-                  <p className="mt-1.5 leading-relaxed text-muted">{project.build}</p>
-                </div>
-                <div>
-                  <h3 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The echo</h3>
-                  <p className="mt-1.5 leading-relaxed text-muted">{project.echo}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-4">
-            <a
-              href={project.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-brand px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-brand-violet/25 transition-transform hover:scale-[1.03]"
-            >
-              Visit live site ↗
-            </a>
-            <button
-              type="button"
-              aria-expanded={open}
-              onClick={() => setOpen((o) => !o)}
-              className="inline-flex items-center gap-3 rounded-full border border-line px-5 py-3 text-sm font-semibold text-muted transition-colors hover:border-brand-violet/50 hover:text-foreground"
-            >
-              <span className="grid h-7 w-7 place-items-center rounded-full border border-line">
-                <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4" aria-hidden="true">
-                  <path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z" stroke="currentColor" strokeWidth="1.7" />
-                  <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.7" />
-                </svg>
-              </span>
-              View case study
-            </button>
-          </div>
+        <div className="flex flex-1 items-center gap-2 truncate rounded-full border border-line bg-background/60 px-3 py-1">
+          <span className="text-brand-mint" aria-hidden="true">
+            ⬤
+          </span>
+          <span className="truncate font-mono text-[11px] text-muted">{project.domain}</span>
         </div>
+        <span className="flex items-center gap-1.5 rounded-full border border-emerald-400/30 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-emerald-300">
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          </span>
+          {project.preview === "live" ? "Live" : "Shot"}
+        </span>
+      </div>
+
+      {/* live window + visit overlay */}
+      <div className="relative">
+        <LiveWindow project={project} />
+        <a
+          href={project.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute inset-0 z-10 grid place-items-center bg-background/0 transition-colors duration-300 hover:bg-background/35"
+        >
+          <span className="flex translate-y-1 items-center gap-2 rounded-full border border-white/25 bg-background/75 px-5 py-2 text-sm font-semibold opacity-0 backdrop-blur transition-all duration-300 group-hover/frame:translate-y-0 group-hover/frame:opacity-100">
+            Visit live site <ArrowUpRight />
+          </span>
+        </a>
       </div>
     </div>
   );
 }
 
-/* Upgraded scroll-stack: each card pins a little lower than the last
-   (STACK_STEP = the visible peek), so the next slides up and covers it. As a
-   card is covered, a scroll-driven rAF loop writes its coverage into --recede,
-   and the .stack-card CSS scales + dims it back into the deck for real depth. */
-const STACK_TOP = 6.5; // rem — where the first card pins (clears the fixed nav)
-const STACK_STEP = 1.7; // rem — extra offset per card => the visible peek
-
-function WorkStack({ projects }: { projects: Project[] }) {
-  const cards = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    let raf = 0;
-    const update = () => {
-      raf = 0;
-      const els = cards.current;
-      for (let i = 0; i < els.length; i++) {
-        const el = els[i];
-        if (!el) continue;
-        const next = els[i + 1];
-        let r = 0;
-        if (next) {
-          const a = el.getBoundingClientRect();
-          const b = next.getBoundingClientRect();
-          const h = a.height || 1;
-          // 0 when the next card sits below this one's foot, → 1 as it climbs over it
-          r = Math.min(1, Math.max(0, (a.top + h - b.top) / h));
-        }
-        el.style.setProperty("--recede", r.toFixed(3));
-      }
-    };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule);
-    // recompute when a card's height changes (e.g. Signal log expands)
-    const ro = new ResizeObserver(schedule);
-    cards.current.forEach((el) => el && ro.observe(el));
-    return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      ro.disconnect();
-      cancelAnimationFrame(raf);
-    };
-  }, [projects.length]);
+/* One project, presented as a full editorial case study. Alternating sides on
+   large screens, each carrying its own accent glow and index number. */
+function CaseStudy({ project, index, reversed }: { project: Project; index: number; reversed: boolean }) {
+  const num = String(index + 1).padStart(2, "0");
 
   return (
-    <div>
-      {projects.map((project, i) => (
-        <div
-          key={project.title}
-          ref={(el) => {
-            cards.current[i] = el;
-          }}
-          className="stack-card mb-6 md:sticky md:mb-8"
-          style={{ top: `${STACK_TOP + i * STACK_STEP}rem` }}
-        >
-          <PanelCard project={project} index={i} total={projects.length} />
+    <article id={`case-${index}`} className="relative scroll-mt-28">
+      <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-14">
+        {/* preview */}
+        <div className={`relative lg:col-span-7 ${reversed ? "lg:order-2" : ""}`}>
+          <div
+            className="pointer-events-none absolute -inset-6 -z-10 rounded-[40px] opacity-70 blur-3xl"
+            style={{ background: `radial-gradient(60% 60% at 50% 45%, ${project.accent}33, transparent 70%)` }}
+            aria-hidden="true"
+          />
+          <Reveal y={30}>
+            <TiltCard>
+              <BrowserFrame project={project} />
+            </TiltCard>
+          </Reveal>
         </div>
-      ))}
-    </div>
+
+        {/* dossier */}
+        <div className={`relative lg:col-span-5 ${reversed ? "lg:order-1" : ""}`}>
+          {/* giant ghost index */}
+          <span
+            className="font-display pointer-events-none absolute -top-16 right-0 select-none text-[9rem] font-extrabold leading-none opacity-[0.06] lg:-top-20 lg:text-[12rem]"
+            style={{ color: project.accent }}
+            aria-hidden="true"
+          >
+            {num}
+          </span>
+
+          <Reveal y={24} delay={0.05}>
+            <div className="relative">
+              <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.32em]">
+                <span style={{ color: project.accent }}>{num}</span>
+                <span className="h-px w-8 bg-line" />
+                <span className="text-muted">{project.kind}</span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <h3 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{project.title}</h3>
+                {project.collab && (
+                  <a
+                    href={project.collab.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-full border border-brand-magenta/40 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-magenta transition-colors hover:border-brand-magenta hover:text-foreground"
+                  >
+                    With {project.collab.name}
+                  </a>
+                )}
+              </div>
+
+              <p className="mt-4 max-w-xl leading-relaxed text-foreground/75">{project.brief}</p>
+
+              <div className="mt-5 flex flex-wrap gap-2">
+                {project.services.map((service) => (
+                  <span
+                    key={service}
+                    className="rounded-full border border-line bg-background/35 px-3 py-1 text-xs font-semibold text-muted"
+                  >
+                    {service}
+                  </span>
+                ))}
+              </div>
+
+              {/* metrics */}
+              <div className="mt-7 grid max-w-xl grid-cols-3 gap-px overflow-hidden rounded-xl border border-line bg-line">
+                {project.metrics.map(([value, label]) => (
+                  <div key={label} className="bg-background/55 p-3.5">
+                    <p className="font-display text-lg font-bold" style={{ color: project.accent }}>
+                      {value}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-snug text-muted">{label}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* build / echo */}
+              <div className="mt-7 grid max-w-xl gap-5 sm:grid-cols-2">
+                <div>
+                  <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The build</h4>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.build}</p>
+                </div>
+                <div>
+                  <h4 className="font-mono text-[11px] font-bold uppercase tracking-[0.2em] text-foreground">The echo</h4>
+                  <p className="mt-1.5 text-sm leading-relaxed text-muted">{project.echo}</p>
+                </div>
+              </div>
+
+              <a
+                href={project.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group/cta mt-8 inline-flex items-center gap-2 rounded-full border border-line px-5 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-white/25"
+                style={{ backgroundColor: `${project.accent}14` }}
+              >
+                Visit live site
+                <span className="transition-transform duration-300 group-hover/cta:translate-x-0.5 group-hover/cta:-translate-y-0.5">
+                  <ArrowUpRight />
+                </span>
+              </a>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </article>
   );
 }
 
-const DEMOS = [
-  "Restaurant Website",
-  "Real Estate Website",
-  "Clinic Website",
-  "E-commerce Store",
-  "Startup Landing Page",
-  "Local Service Business",
-];
-
 function WorkHero() {
   return (
-    <section className="scrim relative z-10 mx-auto max-w-7xl px-6 pb-6 pt-40 md:pt-44">
-      <Reveal>
-        <div className="max-w-3xl">
-          <p className="flex items-center gap-3 font-mono text-sm font-semibold uppercase tracking-[0.42em] text-gradient">
-            <span className="grid h-5 w-5 place-items-center rounded-full border border-brand-violet/35 bg-brand-violet/15">
-              <span className="h-2 w-2 rounded-full bg-brand-violet shadow-[0_0_18px_rgba(18,194,176,0.9)]" />
-            </span>
-            Featured Projects
-          </p>
-          <h1 className="glow-text font-display mt-7 text-5xl font-extrabold leading-[1.04] tracking-tight md:text-7xl">
-            Work that <span className="text-gradient">echoes</span> beyond launch day.
-          </h1>
-          <p className="mt-7 max-w-2xl text-lg leading-relaxed text-foreground/75 md:text-xl">
-            A boutique studio means every project gets founder-level attention. Each card is a window onto
-            the real, live website. Scroll to move through the stack, click to step inside.
-          </p>
-        </div>
-      </Reveal>
+    <section className="scrim relative z-10 mx-auto max-w-7xl px-6 pb-16 pt-40 md:pt-44">
+      <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+        <div className="lg:col-span-7">
+          <Reveal>
+            <p className="flex items-center gap-3 font-mono text-sm font-semibold uppercase tracking-[0.42em] text-gradient">
+              <span className="grid h-5 w-5 place-items-center rounded-full border border-brand-violet/35 bg-brand-violet/15">
+                <span className="h-2 w-2 rounded-full bg-brand-violet shadow-[0_0_18px_rgba(18,194,176,0.9)]" />
+              </span>
+              Selected Work
+            </p>
+            <h1 className="glow-text font-display mt-7 text-5xl font-extrabold leading-[1.02] tracking-tight md:text-7xl">
+              Work that <span className="text-gradient">echoes</span> beyond launch day.
+            </h1>
+            <p className="mt-7 max-w-xl text-lg leading-relaxed text-foreground/75 md:text-xl">
+              A boutique studio means every project gets founder-level attention. Below are real, live
+              websites — framed exactly as they ship. Browse the index, then step inside each one.
+            </p>
+          </Reveal>
 
-      <Reveal delay={0.12}>
-        <div className="mt-8 grid max-w-3xl gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-3">
-          {HERO_CHIPS.map((chip) => (
-            <div key={chip.title} className="flex items-center gap-4 bg-background/50 p-5 backdrop-blur">
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-brand-violet/20 bg-brand-violet/10 text-brand-violet shadow-[0_0_34px_rgba(18,194,176,0.18)]">
-                <ChipIcon type={chip.icon} />
-              </span>
-              <span>
-                <span className="block text-sm font-semibold text-foreground">{chip.title}</span>
-                <span className="mt-1 block text-xs text-muted">{chip.text}</span>
-              </span>
+          <Reveal delay={0.12}>
+            <div className="mt-10 grid max-w-lg grid-cols-3 gap-px overflow-hidden rounded-2xl border border-line bg-line">
+              {INDEX_STATS.map(([value, label]) => (
+                <div key={label} className="bg-background/50 p-5 backdrop-blur">
+                  <p className="text-gradient font-display text-2xl font-bold md:text-3xl">{value}</p>
+                  <p className="mt-1.5 text-xs leading-snug text-muted">{label}</p>
+                </div>
+              ))}
             </div>
+          </Reveal>
+        </div>
+
+        {/* project index — a magazine-style contents list */}
+        <div className="lg:col-span-5">
+          <Reveal delay={0.18}>
+            <div className="glass-card overflow-hidden">
+              <div className="flex items-center justify-between border-b border-line px-5 py-3.5">
+                <span className="font-mono text-[11px] uppercase tracking-[0.3em] text-muted">The Index</span>
+                <span className="font-mono text-[11px] text-muted">04 / 04</span>
+              </div>
+              <ul>
+                {PROJECTS.map((p, i) => (
+                  <li key={p.title}>
+                    <a
+                      href={`#case-${i}`}
+                      className="group flex items-center gap-4 border-b border-line px-5 py-4 transition-colors last:border-b-0 hover:bg-white/[0.03]"
+                    >
+                      <span className="font-mono text-xs text-muted">{String(i + 1).padStart(2, "0")}</span>
+                      <span
+                        className="font-display grid h-9 w-9 flex-none place-items-center rounded-lg text-sm font-bold text-white"
+                        style={{ backgroundColor: p.accent }}
+                      >
+                        {p.monogram}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-display font-semibold">{p.title}</span>
+                        <span className="block truncate font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+                          {p.kind}
+                        </span>
+                      </span>
+                      <span className="flex h-8 w-8 flex-none place-items-center justify-center rounded-full border border-line text-muted transition-colors group-hover:border-brand-mint/50 group-hover:text-brand-mint">
+                        <ArrowUpRight className="h-3.5 w-3.5" />
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Reveal>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function SelectedWork() {
+  return (
+    <section className="relative z-10 mx-auto max-w-7xl px-6 pb-28">
+      <div className="space-y-28 md:space-y-36">
+        {PROJECTS.map((project, i) => (
+          <CaseStudy key={project.title} project={project} index={i} reversed={i % 2 === 1} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function DemoDirections() {
+  return (
+    <section className="relative z-10 border-y border-line bg-surface/30">
+      <div className="mx-auto max-w-7xl px-6 py-24">
+        <Reveal>
+          <SectionTag>Demo directions</SectionTag>
+          <h2 className="font-display mt-5 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl">
+            The same craft can be shaped for many business types.
+          </h2>
+        </Reveal>
+
+        <div className="mt-12 grid gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
+          {DEMOS.map((demo, i) => (
+            <Reveal key={demo} delay={i * 0.04}>
+              <div className="sheen group relative h-full overflow-hidden bg-background/82 p-7 backdrop-blur transition-colors hover:bg-white/[0.045]">
+                <span className="font-mono text-sm text-muted">{String(i + 1).padStart(2, "0")}</span>
+                <h3 className="font-display mt-10 text-2xl font-semibold">{demo}</h3>
+                <span className="mt-6 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  Concept available <ArrowUpRight className="h-3.5 w-3.5" />
+                </span>
+              </div>
+            </Reveal>
           ))}
         </div>
-      </Reveal>
+
+        <Reveal>
+          <div className="mt-16 text-center">
+            <SectionTag>Your project here</SectionTag>
+            <h2 className="font-display mx-auto mt-5 max-w-2xl text-3xl font-bold md:text-4xl">
+              This page grows with every client we make proud.
+            </h2>
+            <p className="mx-auto mt-4 max-w-xl text-muted">
+              Early clients get founder-level attention, honest strategy, and a website built to become the next strong
+              example.
+            </p>
+            <div className="mt-9 flex flex-wrap justify-center gap-4">
+              <GradientButton href="/contact">Start your project</GradientButton>
+              <Link
+                href="/services"
+                className="px-5 py-3 font-semibold text-muted transition-colors hover:text-foreground"
+              >
+                Explore services
+              </Link>
+            </div>
+          </div>
+        </Reveal>
+      </div>
     </section>
   );
 }
@@ -502,48 +500,8 @@ export function WorkPage() {
       <div className="pointer-events-none fixed inset-0 bg-background/75" aria-hidden="true" />
 
       <WorkHero />
-
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-32 pt-2">
-        <WorkStack projects={PROJECTS} />
-      </section>
-
-      <section className="relative z-10 border-y border-line bg-surface/30">
-        <div className="mx-auto max-w-7xl px-6 py-24">
-          <Reveal>
-            <SectionTag>Demo directions</SectionTag>
-            <h2 className="font-display mt-5 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl">
-              The same craft can be shaped for many business types.
-            </h2>
-          </Reveal>
-          <div className="mt-12 grid gap-px overflow-hidden border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {DEMOS.map((demo, i) => (
-              <Reveal key={demo} delay={i * 0.04}>
-                <div className="bg-background/82 p-7 backdrop-blur transition-colors hover:bg-white/[0.045]">
-                  <span className="font-mono text-sm text-muted">0{i + 1}</span>
-                  <h3 className="font-display mt-8 text-2xl font-semibold">{demo}</h3>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-          <Reveal>
-            <div className="mt-14 text-center">
-              <SectionTag>Your project here</SectionTag>
-              <h2 className="font-display mx-auto mt-5 max-w-2xl text-3xl font-bold md:text-4xl">
-                This page grows with every client we make proud.
-              </h2>
-              <p className="mx-auto mt-4 max-w-xl text-muted">
-                Early clients get founder-level attention, honest strategy, and a website built to become the next strong example.
-              </p>
-              <div className="mt-8 flex justify-center gap-4">
-                <GradientButton href="/contact">Start your project</GradientButton>
-                <Link href="/services" className="px-5 py-3 font-semibold text-muted transition-colors hover:text-foreground">
-                  Explore services
-                </Link>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <SelectedWork />
+      <DemoDirections />
     </main>
   );
 }
